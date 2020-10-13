@@ -1312,6 +1312,9 @@ TickType_t xTimerGetExpiryTime( TimerHandle_t xTimer ) PRIVILEGED_FUNCTION;
  * for use by the kernel only.
  */
 BaseType_t xTimerCreateTimerTask( void ) PRIVILEGED_FUNCTION;
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+	BaseType_t xTimerCreateTimerTaskStatic( void ) PRIVILEGED_FUNCTION;
+#endif // ( configSUPPORT_STATIC_ALLOCATION == 1 )
 BaseType_t xTimerGenericCommand( TimerHandle_t xTimer,
                                  const BaseType_t xCommandID,
                                  const TickType_t xOptionalValue,

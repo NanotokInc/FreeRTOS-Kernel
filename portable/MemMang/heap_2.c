@@ -44,6 +44,13 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#ifndef configHEAP_ALLOCATION_SCHEME
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+	#warning The configHEAP_ALLOCATION_SCHEME is not defined in FreeRTOSConfig
+#endif
+#else
+#if(configHEAP_ALLOCATION_SCHEME == HEAP_ALLOCATION_TYPE2)
+
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
 #if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
@@ -272,3 +279,7 @@ static void prvHeapInit( void )
     pxFirstFreeBlock->pxNextFreeBlock = &xEnd;
 }
 /*-----------------------------------------------------------*/
+
+#endif /* #ifdef configHEAP_ALLOCATION_SCHEME */
+#endif /* #if(configHEAP_ALLOCATION_SCHEME == HEAP_ALLOCATION_TYPE1) */
+
