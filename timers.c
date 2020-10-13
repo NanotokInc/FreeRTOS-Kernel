@@ -230,7 +230,34 @@
 
         if( xTimerQueue != NULL )
         {
+		xReturn = xTaskCreate(	prvTimerTask,
+								configTIMER_SERVICE_TASK_NAME,
+								configTIMER_TASK_STACK_DEPTH,
+								NULL,
+								( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
+								&xTimerTaskHandle );
+	}
+	else
+	{
+		mtCOVERAGE_TEST_MARKER();
+	}
+
+	configASSERT( xReturn );
+	return xReturn;
+}
+
             #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+	BaseType_t xTimerCreateTimerTaskStatic( void )
+	{
+	BaseType_t xReturn = pdFAIL;
+
+		/* This function is called when the scheduler is started if
+		configUSE_TIMERS is set to 1.  Check that the infrastructure used by the
+		timer service task has been created/initialised.  If timers have already
+		been created then the initialisation will already have been performed. */
+		prvCheckForValidListAndQueue();
+
+		if( xTimerQueue != NULL )
                 {
                     StaticTask_t * pxTimerTaskTCBBuffer = NULL;
                     StackType_t * pxTimerTaskStackBuffer = NULL;
@@ -250,17 +277,6 @@
                         xReturn = pdPASS;
                     }
                 }
-            #else /* if ( configSUPPORT_STATIC_ALLOCATION == 1 ) */
-                {
-                    xReturn = xTaskCreate( prvTimerTask,
-                                           configTIMER_SERVICE_TASK_NAME,
-                                           configTIMER_TASK_STACK_DEPTH,
-                                           NULL,
-                                           ( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
-                                           &xTimerTaskHandle );
-                }
-            #endif /* configSUPPORT_STATIC_ALLOCATION */
-        }
         else
         {
             mtCOVERAGE_TEST_MARKER();
@@ -269,6 +285,8 @@
         configASSERT( xReturn );
         return xReturn;
     }
+#endif // ( configSUPPORT_STATIC_ALLOCATION == 1 )
+
 /*-----------------------------------------------------------*/
 
     #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
