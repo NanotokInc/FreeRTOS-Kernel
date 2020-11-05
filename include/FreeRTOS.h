@@ -744,11 +744,15 @@
         #endif /* portALT_GET_RUN_TIME_COUNTER_VALUE */
     #endif /* portGET_RUN_TIME_COUNTER_VALUE */
 
-#endif /* configGENERATE_RUN_TIME_STATS */
+	#ifndef portCONFIGURE_TIMER_FOR_RUN_TIME_STATS
+		#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()
+	#endif
 
-#ifndef portCONFIGURE_TIMER_FOR_RUN_TIME_STATS
-    #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()
-#endif
+	#ifndef portRESET_RUN_TIME_COUNTER_VALUE
+		#define portRESET_RUN_TIME_COUNTER_VALUE()
+	#endif
+
+#endif /* configGENERATE_RUN_TIME_STATS */
 
 #ifndef configUSE_MALLOC_FAILED_HOOK
     #define configUSE_MALLOC_FAILED_HOOK    0

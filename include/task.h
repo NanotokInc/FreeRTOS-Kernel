@@ -1007,10 +1007,8 @@ eTaskState eTaskGetState( TaskHandle_t xTask ) PRIVILEGED_FUNCTION;
  * \defgroup vTaskGetInfo vTaskGetInfo
  * \ingroup TaskCtrl
  */
-void vTaskGetInfo( TaskHandle_t xTask,
-                   TaskStatus_t * pxTaskStatus,
-                   BaseType_t xGetFreeStackSpace,
-                   eTaskState eState ) PRIVILEGED_FUNCTION;
+void vTaskGetInfo( TaskHandle_t xTask, TaskStatus_t * pxTaskStatus, BaseType_t xGetFreeStackSpace, eTaskState eState ) PRIVILEGED_FUNCTION;
+void vTaskGetInfoEx( TaskHandle_t xTask, TaskStatus_t * pxTaskStatus, BaseType_t xGetFreeStackSpace, eTaskState eState, BaseType_t xResetStats ) PRIVILEGED_FUNCTION;
 
 /**
  * task. h
@@ -1752,9 +1750,8 @@ TaskHandle_t xTaskGetIdleTaskHandle( void ) PRIVILEGED_FUNCTION;
  *  }
  *  </pre>
  */
-UBaseType_t uxTaskGetSystemState( TaskStatus_t * const pxTaskStatusArray,
-                                  const UBaseType_t uxArraySize,
-                                  uint32_t * const pulTotalRunTime ) PRIVILEGED_FUNCTION;
+//UBaseType_t uxTaskGetSystemState( TaskStatus_t * const pxTaskStatusArray, const UBaseType_t uxArraySize, uint32_t * const pulTotalRunTime ) PRIVILEGED_FUNCTION;
+UBaseType_t uxTaskGetSystemState( TaskStatus_t * const pxTaskStatusArray, const UBaseType_t uxArraySize, uint32_t * const pulTotalRunTime, BaseType_t xResetStats ) PRIVILEGED_FUNCTION;
 
 /**
  * task. h
@@ -1856,6 +1853,7 @@ void vTaskList( char * pcWriteBuffer ) PRIVILEGED_FUNCTION;     /*lint !e971 Unq
  * \ingroup TaskUtils
  */
 void vTaskGetRunTimeStats( char * pcWriteBuffer ) PRIVILEGED_FUNCTION;     /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+void vTaskGetRunTimeStatsEx( char* pcWriteBuffer, BaseType_t xResetStats ) PRIVILEGED_FUNCTION;     /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
 
 /**
  * task. h

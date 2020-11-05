@@ -471,9 +471,8 @@ static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait,
  */
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-    static UBaseType_t prvListTasksWithinSingleList( TaskStatus_t * pxTaskStatusArray,
-                                                     List_t * pxList,
-                                                     eTaskState eState ) PRIVILEGED_FUNCTION;
+//    static UBaseType_t prvListTasksWithinSingleList( TaskStatus_t * pxTaskStatusArray, List_t * pxList, eTaskState eState ) PRIVILEGED_FUNCTION;
+    static UBaseType_t prvListTasksWithinSingleList( TaskStatus_t * pxTaskStatusArray, List_t * pxList, eTaskState eState, BaseType_t xResetStats ) PRIVILEGED_FUNCTION;
 
 #endif
 
@@ -2545,9 +2544,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-    UBaseType_t uxTaskGetSystemState( TaskStatus_t * const pxTaskStatusArray,
-                                      const UBaseType_t uxArraySize,
-                                      uint32_t * const pulTotalRunTime )
+    UBaseType_t uxTaskGetSystemState( TaskStatus_t * const pxTaskStatusArray, const UBaseType_t uxArraySize, uint32_t * const pulTotalRunTime, BaseType_t xResetStats )
     {
         UBaseType_t uxTask = 0, uxQueue = configMAX_PRIORITIES;
 
@@ -2561,19 +2558,19 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
                 do
                 {
                     uxQueue--;
-                    uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( pxReadyTasksLists[ uxQueue ] ), eReady );
+                    uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( pxReadyTasksLists[ uxQueue ] ), eReady, xResetStats );
                 } while( uxQueue > ( UBaseType_t ) tskIDLE_PRIORITY ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
 
                 /* Fill in an TaskStatus_t structure with information on each
                  * task in the Blocked state. */
-                uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), ( List_t * ) pxDelayedTaskList, eBlocked );
-                uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), ( List_t * ) pxOverflowDelayedTaskList, eBlocked );
+                uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), ( List_t * ) pxDelayedTaskList, eBlocked, xResetStats );
+                uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), ( List_t * ) pxOverflowDelayedTaskList, eBlocked, xResetStats );
 
                 #if ( INCLUDE_vTaskDelete == 1 )
                     {
                         /* Fill in an TaskStatus_t structure with information on
                          * each task that has been deleted but not yet cleaned up. */
-                        uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &xTasksWaitingTermination, eDeleted );
+                        uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &xTasksWaitingTermination, eDeleted, xResetStats );
                     }
                 #endif
 
@@ -2581,7 +2578,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
                     {
                         /* Fill in an TaskStatus_t structure with information on
                          * each task in the Suspended state. */
-                        uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &xSuspendedTaskList, eSuspended );
+                        uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &xSuspendedTaskList, eSuspended, xResetStats );
                     }
                 #endif
 
@@ -2593,6 +2590,10 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
                                 portALT_GET_RUN_TIME_COUNTER_VALUE( ( *pulTotalRunTime ) );
                             #else
                                 *pulTotalRunTime = portGET_RUN_TIME_COUNTER_VALUE();
+                                if ( pdTRUE == xResetStats )
+                                {
+                                	portRESET_RUN_TIME_COUNTER_VALUE();
+                                }
                             #endif
                         }
                     }
@@ -3733,10 +3734,12 @@ static void prvCheckTasksWaitingTermination( void )
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-    void vTaskGetInfo( TaskHandle_t xTask,
-                       TaskStatus_t * pxTaskStatus,
-                       BaseType_t xGetFreeStackSpace,
-                       eTaskState eState )
+	void vTaskGetInfo( TaskHandle_t xTask, TaskStatus_t * pxTaskStatus, BaseType_t xGetFreeStackSpace, eTaskState eState )
+	{
+		vTaskGetInfoEx( xTask, pxTaskStatus, xGetFreeStackSpace, eState, false );
+	}
+
+    void vTaskGetInfoEx( TaskHandle_t xTask, TaskStatus_t * pxTaskStatus, BaseType_t xGetFreeStackSpace, eTaskState eState, BaseType_t xResetStats )
     {
         TCB_t * pxTCB;
 
@@ -3762,6 +3765,10 @@ static void prvCheckTasksWaitingTermination( void )
         #if ( configGENERATE_RUN_TIME_STATS == 1 )
             {
                 pxTaskStatus->ulRunTimeCounter = pxTCB->ulRunTimeCounter;
+                if ( pdTRUE == xResetStats )
+                {
+                	pxTCB->ulRunTimeCounter = 0;
+                }
             }
         #else
             {
@@ -3832,9 +3839,7 @@ static void prvCheckTasksWaitingTermination( void )
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-    static UBaseType_t prvListTasksWithinSingleList( TaskStatus_t * pxTaskStatusArray,
-                                                     List_t * pxList,
-                                                     eTaskState eState )
+    static UBaseType_t prvListTasksWithinSingleList( TaskStatus_t * pxTaskStatusArray, List_t * pxList, eTaskState eState, BaseType_t xResetStats )
     {
         configLIST_VOLATILE TCB_t * pxNextTCB, * pxFirstTCB;
         UBaseType_t uxTask = 0;
@@ -3850,7 +3855,7 @@ static void prvCheckTasksWaitingTermination( void )
             do
             {
                 listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, pxList ); /*lint !e9079 void * is used as this macro is used with timers and co-routines too.  Alignment is known to be fine as the type of the pointer stored and retrieved is the same. */
-                vTaskGetInfo( ( TaskHandle_t ) pxNextTCB, &( pxTaskStatusArray[ uxTask ] ), pdTRUE, eState );
+                vTaskGetInfoEx( ( TaskHandle_t ) pxNextTCB, &( pxTaskStatusArray[ uxTask ] ), pdTRUE, eState, xResetStats );
                 uxTask++;
             } while( pxNextTCB != pxFirstTCB );
         }
@@ -4491,7 +4496,7 @@ static void prvResetNextTaskUnblockTime( void )
         if( pxTaskStatusArray != NULL )
         {
             /* Generate the (binary) data. */
-            uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, NULL );
+            uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, NULL, pdFALSE );
 
             /* Create a human readable table from the binary data. */
             for( x = 0; x < uxArraySize; x++ )
@@ -4549,7 +4554,12 @@ static void prvResetNextTaskUnblockTime( void )
 
 #if ( ( configGENERATE_RUN_TIME_STATS == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
 
-    void vTaskGetRunTimeStats( char * pcWriteBuffer )
+    void vTaskGetRunTimeStats( char* pcWriteBuffer )
+    {
+    	vTaskGetRunTimeStatsEx( pcWriteBuffer, pdFALSE );
+    }
+
+    void vTaskGetRunTimeStatsEx( char* pcWriteBuffer, BaseType_t xResetStats )
     {
         TaskStatus_t * pxTaskStatusArray;
         UBaseType_t uxArraySize, x;
@@ -4601,7 +4611,7 @@ static void prvResetNextTaskUnblockTime( void )
         if( pxTaskStatusArray != NULL )
         {
             /* Generate the (binary) data. */
-            uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, &ulTotalTime );
+            uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, &ulTotalTime, xResetStats );
 
             /* For percentage calculations. */
             ulTotalTime /= 100UL;
