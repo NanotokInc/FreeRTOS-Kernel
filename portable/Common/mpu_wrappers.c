@@ -32,6 +32,7 @@
 /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
  * all the API functions to use the MPU wrappers.  That should only be done when
  * task.h is included from an application file. */
+#ifdef portUSING_MPU_WRAPPERS
 #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
 /* Scheduler includes. */
@@ -464,12 +465,13 @@ char * MPU_pcTaskGetName( TaskHandle_t xTaskToQuery ) /* FREERTOS_SYSTEM_CALL */
 #if ( configUSE_TRACE_FACILITY == 1 )
     UBaseType_t MPU_uxTaskGetSystemState( TaskStatus_t * pxTaskStatusArray,
                                           UBaseType_t uxArraySize,
-                                          uint32_t * pulTotalRunTime ) /* FREERTOS_SYSTEM_CALL */
+                                          uint32_t * pulTotalRunTime,
+										  UBaseType_t xResetStats  ) /* FREERTOS_SYSTEM_CALL */
     {
         UBaseType_t uxReturn;
         BaseType_t xRunningPrivileged = xPortRaisePrivilege();
 
-        uxReturn = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, pulTotalRunTime );
+        uxReturn = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, pulTotalRunTime, xResetStats );
         vPortResetPrivilege( xRunningPrivileged );
         return uxReturn;
     }
@@ -1448,3 +1450,4 @@ BaseType_t MPU_xStreamBufferSetTriggerLevel( StreamBufferHandle_t xStreamBuffer,
 #if configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS == 1
     #include "application_defined_privileged_functions.h"
 #endif
+#endif // portUSING_MPU_WRAPPERS
