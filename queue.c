@@ -1975,22 +1975,6 @@ BaseType_t xQueuePeekFromISR( QueueHandle_t xQueue,
 }
 /*-----------------------------------------------------------*/
 
-UBaseType_t uxQueueMessagesWaiting( const QueueHandle_t xQueue )
-{
-    UBaseType_t uxReturn;
-
-    configASSERT( xQueue );
-
-    taskENTER_CRITICAL();
-    {
-        uxReturn = ( ( Queue_t * ) xQueue )->uxMessagesWaiting;
-    }
-    taskEXIT_CRITICAL();
-
-    return uxReturn;
-} /*lint !e818 Pointer cannot be declared const as xQueue is a typedef not pointer. */
-/*-----------------------------------------------------------*/
-
 UBaseType_t uxQueueSpacesAvailable( const QueueHandle_t xQueue )
 {
     UBaseType_t uxReturn;
@@ -2001,6 +1985,34 @@ UBaseType_t uxQueueSpacesAvailable( const QueueHandle_t xQueue )
     taskENTER_CRITICAL();
     {
         uxReturn = pxQueue->uxLength - pxQueue->uxMessagesWaiting;
+    }
+    taskEXIT_CRITICAL();
+
+    return uxReturn;
+} /*lint !e818 Pointer cannot be declared const as xQueue is a typedef not pointer. */
+/*-----------------------------------------------------------*/
+
+UBaseType_t uxQueueSpacesAvailableFromISR( const QueueHandle_t xQueue )
+{
+    UBaseType_t uxReturn;
+    Queue_t * const pxQueue = xQueue;
+
+    configASSERT( pxQueue );
+    uxReturn = pxQueue->uxLength - pxQueue->uxMessagesWaiting;
+
+    return uxReturn;
+} /*lint !e818 Pointer cannot be declared const as xQueue is a typedef not pointer. */
+/*-----------------------------------------------------------*/
+
+UBaseType_t uxQueueMessagesWaiting( const QueueHandle_t xQueue )
+{
+    UBaseType_t uxReturn;
+
+    configASSERT( xQueue );
+
+    taskENTER_CRITICAL();
+    {
+        uxReturn = ( ( Queue_t * ) xQueue )->uxMessagesWaiting;
     }
     taskEXIT_CRITICAL();
 
