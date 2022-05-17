@@ -111,11 +111,15 @@
 #endif
 
 /*
- * Setup the timer to generate the tick interrupts.  The implementation in this
+ * Set up the timer to generate the tick interrupts.  The implementation in this
  * file is weak to allow application writers to change the timer used to
  * generate the tick interrupt.
  */
 void vPortSetupTimerInterrupt( void );
+ /*-----------------------------------------------------------*/
+void vPortEnableTimerInterrupt( void );
+void vPortDisableTimerInterrupt( void );
+ /*-----------------------------------------------------------*/
 
 /*
  * Exception handlers.
@@ -702,7 +706,19 @@ __attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void )
 
     /* Configure SysTick to interrupt at the requested rate. */
     portNVIC_SYSTICK_LOAD_REG = ( configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;
-    portNVIC_SYSTICK_CTRL_REG = ( portNVIC_SYSTICK_CLK_BIT | portNVIC_SYSTICK_INT_BIT | portNVIC_SYSTICK_ENABLE_BIT );
+//    portNVIC_SYSTICK_CTRL_REG = ( portNVIC_SYSTICK_CLK_BIT | portNVIC_SYSTICK_INT_BIT | portNVIC_SYSTICK_ENABLE_BIT );
+    portNVIC_SYSTICK_CTRL_REG = ( portNVIC_SYSTICK_CLK_BIT | portNVIC_SYSTICK_INT_BIT );
+    vPortEnableTimerInterrupt();
+}
+/*-----------------------------------------------------------*/
+__attribute(( weak )) void vPortEnableTimerInterrupt( void )
+{
+    portNVIC_SYSTICK_CTRL_REG |= portNVIC_SYSTICK_ENABLE_BIT;
+}
+/*-----------------------------------------------------------*/
+__attribute(( weak )) void vPortDisableTimerInterrupt( void )
+{
+    portNVIC_SYSTICK_CTRL_REG &= ~portNVIC_SYSTICK_ENABLE_BIT;
 }
 /*-----------------------------------------------------------*/
 
