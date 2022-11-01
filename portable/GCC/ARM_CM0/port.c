@@ -74,7 +74,8 @@
  * file is weak to allow application writers to change the timer used to
  * generate the tick interrupt.
  */
-void vPortSetupTimerInterrupt( void );
+void vPortStartTimer( void );
+void vPortStopTimer( void );
 
 /*
  * Exception handlers.
@@ -221,7 +222,7 @@ BaseType_t xPortStartScheduler( void )
 
     /* Start the timer that generates the tick ISR.  Interrupts are disabled
      * here already. */
-    vPortSetupTimerInterrupt();
+    vPortStartTimer();
 
     /* Initialise the critical nesting count ready for the first task. */
     uxCriticalNesting = 0;
@@ -247,7 +248,8 @@ void vPortEndScheduler( void )
 {
     /* Not implemented in ports where there is nothing to return to.
      * Artificially force an assert. */
-    configASSERT( uxCriticalNesting == 1000UL );
+    //configASSERT( uxCriticalNesting == 1000UL );
+	vPortStopTimer();
 }
 /*-----------------------------------------------------------*/
 
@@ -375,7 +377,7 @@ void xPortSysTickHandler( void )
  * Setup the systick timer to generate the tick interrupts at the required
  * frequency.
  */
-__attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void )
+__attribute__( ( weak ) ) void vPortStartTimer( void )
 {
     /* Calculate the constants required to configure the tick interrupt. */
     #if ( configUSE_TICKLESS_IDLE == 1 )
@@ -393,6 +395,16 @@ __attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void )
     /* Configure SysTick to interrupt at the requested rate. */
     portNVIC_SYSTICK_LOAD_REG = ( configCPU_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;
     portNVIC_SYSTICK_CTRL_REG = portNVIC_SYSTICK_CLK_BIT | portNVIC_SYSTICK_INT_BIT | portNVIC_SYSTICK_ENABLE_BIT;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * Stop the systick timer.
+ */
+__attribute__( ( weak ) ) void vPortStopTimer( void )
+{
+    /* Stop and reset the SysTick. */
+    portNVIC_SYSTICK_CTRL_REG = 0UL;
 }
 /*-----------------------------------------------------------*/
 
